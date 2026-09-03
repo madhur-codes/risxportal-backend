@@ -35,46 +35,28 @@ for (const variable of requiredSMTPVariables) {
 // EMAIL TRANSPORTER
 // ==========================================================
 
-const smtpPort =
-    Number(process.env.SMTP_PORT || 587);
+const transporter = nodemailer.createTransport({
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS
+    }
+});
 
-const smtpSecure =
-    process.env.SMTP_SECURE === "true";
-
-
-const transporter =
-    nodemailer.createTransport({
-
-        host:
-            process.env.SMTP_HOST,
-
-        port:
-            smtpPort,
-
-        secure:
-            smtpSecure,
-
-        auth: {
-
-            user:
-                process.env.SMTP_USER,
-
-            pass:
-                process.env.SMTP_PASS
-        },
-
-        // Prevent Render from hanging for a very long time.
-        connectionTimeout:
-            15000,
-
-        greetingTimeout:
-            15000,
-
-        socketTimeout:
-            20000
-    });
-
-
+transporter.verify((error, success) => {
+    if (error) {
+        console.error(
+            "❌ SMTP configuration error:",
+            error.message
+        );
+    } else {
+        console.log(
+            "✅ SMTP server is ready to send emails"
+        );
+    }
+});
 // ==========================================================
 // VERIFY SMTP CONNECTION
 // ==========================================================

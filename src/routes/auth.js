@@ -361,108 +361,97 @@ router.post(
             // SEND OTP EMAIL
             // --------------------------------------------------
 
-            try {
+           async function sendOTPEmail(
+    email,
+    name,
+    otp
+) {
 
-                console.log(
-                    "📧 Attempting to send OTP to:",
-                    normalizedEmail
-                );
+    console.log(
+        "📨 Sending OTP email to",
+        email
+    );
 
+    const mailOptions = {
+        from:
+            process.env.SMTP_FROM ||
+            process.env.SMTP_USER,
 
-                await sendOTPEmail(
+        to: email,
 
-                    normalizedEmail,
+        subject:
+            "RISX GTI - Email Verification OTP",
 
-                    cleanName,
+        html: `
+            <div style="
+                font-family: Arial, sans-serif;
+                max-width: 600px;
+                margin: auto;
+                padding: 30px;
+                background: #0b1020;
+                color: white;
+                border-radius: 15px;
+            ">
 
-                    otp
-                );
+                <h1 style="
+                    color: #00e5ff;
+                    text-align: center;
+                ">
+                    RISX GTI
+                </h1>
 
+                <h2>Verify Your Email</h2>
 
-                console.log(
-                    "✅ OTP email sent successfully:",
-                    normalizedEmail
-                );
+                <p>Hello ${escapeHtml(name)},</p>
 
+                <p>Your verification OTP is:</p>
 
-            } catch (emailError) {
+                <div style="
+                    text-align: center;
+                    margin: 30px 0;
+                ">
+                    <span style="
+                        display: inline-block;
+                        padding: 15px 30px;
+                        background: #111a35;
+                        color: #00e5ff;
+                        font-size: 32px;
+                        font-weight: bold;
+                        letter-spacing: 8px;
+                        border-radius: 10px;
+                    ">
+                        ${otp}
+                    </span>
+                </div>
 
-                console.error(
-                    "❌ OTP email error:"
-                );
+                <p>
+                    This OTP will expire in
+                    <strong>10 minutes</strong>.
+                </p>
 
-                console.error(
-                    emailError
-                );
+                <p style="
+                    color: #aaa;
+                    font-size: 13px;
+                ">
+                    If you did not request this verification,
+                    you can safely ignore this email.
+                </p>
 
+            </div>
+        `
+    };
 
-                // Delete pending verification because
-                // the user never received the OTP.
+    const info = await transporter.sendMail(
+        mailOptions
+    );
 
-                await prisma
-                    .emailVerification
-                    .deleteMany({
+    console.log(
+        "📧 Gmail accepted message:",
+        info.messageId
+    );
 
-                        where: {
-
-                            email:
-                                normalizedEmail
-                        }
-                    });
-
-
-                return res
-                    .status(500)
-                    .json({
-
-                        message:
-                            "Unable to send verification email. Please check the server email configuration."
-                    });
-            }
-
-
-            // --------------------------------------------------
-            // SUCCESS
-            // --------------------------------------------------
-
-            return res
-                .status(201)
-                .json({
-
-                    message:
-                        "Verification OTP sent successfully.",
-
-                    requiresVerification:
-                        true,
-
-                    email:
-                        normalizedEmail
-                });
-
-
-        } catch (error) {
-
-            console.error(
-                "❌ Registration error:"
-            );
-
-            console.error(
-                error
-            );
-
-
-            return res
-                .status(500)
-                .json({
-
-                    message:
-                        "Something went wrong while creating the account."
-                });
-        }
-    }
-);
-
-
+    return info;
+}
 // ==========================================================
 // VERIFY OTP
 // ==========================================================
